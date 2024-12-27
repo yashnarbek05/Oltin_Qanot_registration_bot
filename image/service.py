@@ -28,7 +28,7 @@ def write_name_and_second_name_to_badge(name, second_name, time, vol_id):
 
         photo_name = f"images/{name}_{second_name}.png"
 
-        draw.text(((width/ 4) + 350, (height*3/4) - 300), vol_id, font=ImageFont.truetype(FONT_PATH, 120))
+        draw.text(((width/ 4) + 350, (height*3/4) - 300), str(vol_id), font=ImageFont.truetype(FONT_PATH, 120))
         print("id is written!!!!!!!")
 
         draw.text(((width/ 4) + 250, (height*3/4) + 50), time.split(" ").pop(0), font=ImageFont.truetype(FONT_PATH, 120))

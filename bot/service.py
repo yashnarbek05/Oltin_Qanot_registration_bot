@@ -1,39 +1,42 @@
-from telegram import Update, ReplyKeyboardRemove
-from telegram.ext import ContextTypes, ConversationHandler
+from aiogram import types, Bot
+from aiogram.fsm.context import FSMContext
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from User.model import User
-
-
-async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(f'Hello {update.effective_user.first_name}')
-    return MESSAGE
-
-WAITING_NAME, WAITING_AGE = range(1,3)
-MESSAGE = 0
-
-# Start the conversation
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE, user: User) -> int:
-    await update.message.reply_text("Hello! What's your name?")
-    return WAITING_NAME  # Move to the next state
-
-# Handle name input
-async def get_first_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data['name'] = update.message.text
-    await update.message.reply_text(f"Nice to meet you, {update.message.text}! How old are you?")
-    return WAITING_AGE
-
-# Handle age input
-async def get_last_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data['age'] = update.message.text
-    name = context.user_data['name']
-    await update.message.reply_text(f"Thank you, {name}. You are {update.message.text} years old.")
-    return MESSAGE  # End conversation
-
-# Handle cancellation
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Conversation cancelled.", reply_markup=ReplyKeyboardRemove())
-    return ConversationHandler.END
+from bot.state import states
 
 
-async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("your message: " + update.message.text)
+async def start(message: types.Message, bot: Bot, state: FSMContext):
+    button1 = InlineKeyboardButton(text="English🇺🇸", callback_data="en")
+    button2 = InlineKeyboardButton(text="Uzbek🇺🇿", callback_data="uz")
+    button3 = InlineKeyboardButton(text="Русский🇷🇺", callback_data="ru")
+    keyboard_inline = InlineKeyboardMarkup().add(
+        [button1],
+        [button2],
+        [button3]
+    )
+
+    await message.reply("Iltimos tilni tanlang!", reply_markup=keyboard_inline)
+    await state.set_state(states.LANGUAGE)
+
+
+async def check_button(call: types.CallbackQuery, state: FSMContext):
+    lang_texts = {
+        "en": "Hello! Enter your name: ",
+        "uz": "Assalomu alaykum! Registratsiya uchun ismingizni kiriting:",
+        "ru": "Привет! Введите свое имя для регистрации:"
+    }
+
+    await call.message.answer(lang_texts[call.data])
+    await state.set_state(states.FIRSTNAME)
+    await state.update_data(lang=call.data)
+
+    await call.answer(text="Processing...")
+
+
+async def enter_firstname(message: types.Message, bot: Bot, state: FSMContext):
+    await message.copy_to(chat_id=message.chat.id)
+    await state.set_state(states.LASTNAME)
+
+
+async def echo(message: types.Message, bot: Bot):
+    await message.copy_to(chat_id=message.chat.id)
