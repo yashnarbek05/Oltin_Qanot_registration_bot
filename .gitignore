@@ -186,6 +186,8 @@ cython_debug/
 # AWS User-specific
 .idea/**/aws.xml
 
+config.py
+oltin-qanot-uchun.json
 # Generated files
 .idea/**/contentModel.xml
 

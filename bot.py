@@ -3,8 +3,10 @@ from xml.sax import ContentHandler
 from telegram.ext import ApplicationBuilder, CommandHandler, ConversationHandler, filters, MessageHandler
 
 from bot.service import hello, start, get_name, get_age, cancel, WAITING_AGE, WAITING_NAME, handle_text, MESSAGE
+from config import BOT_TOKEN
 
-TOKEN = "7610459957:AAG4Qfrtl6Vnag5wjlbf-3ACWSSHSX9elkc"
+TOKEN = BOT_TOKEN
+
 
 
 def main():
