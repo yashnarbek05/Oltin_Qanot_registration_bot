@@ -1,25 +1,36 @@
-from asyncio import run
+from telegram import Update
+from telegram.ext import Application, ConversationHandler, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 
-from aiogram import Bot, Dispatcher, F
-
-from bot.service import start, check_button
+from bot.service import PHOTO, photo, bio, cancel, start, \
+    language, BIO, LANGUAGE, FULLNAME, fullname, FULLNAME
 from config import BOT_TOKEN
 
-dp = Dispatcher()
-bot = Bot(BOT_TOKEN)
 
-excel_document = None
+def main() -> None:
+    """Run the bot."""
+    # Create the Application and pass it your bot's token.
+    application = Application.builder().token(BOT_TOKEN).build()
 
+    # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("start", start)],
+        states={
+            LANGUAGE: [CallbackQueryHandler(language)],
+            FULLNAME: [MessageHandler(filters.TEXT, fullname)],
+            PHOTO: [MessageHandler(filters.PHOTO, photo)],
+            BIO: [MessageHandler(filters.TEXT & ~filters.COMMAND, bio)],
+        },
+        fallbacks=[CommandHandler("cancel", cancel)]
+    )
 
-async def main():
-    dp.message.register(start)
-    dp.callback_query.register(check_button, F.in_(('en','ru','uz')))
+    application.add_handler(conv_handler)
 
-    await dp.start_polling(bot, polling_timeout=1)
+    # Run the bot until the user presses Ctrl-C
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
-    run(main())
+    main()
 
     # excel_document = get_values_from_sheet()
     # print(excel_document)
