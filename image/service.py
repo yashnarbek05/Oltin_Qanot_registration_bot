@@ -5,7 +5,7 @@ from PIL import ImageFont, ImageDraw, Image
 IMAGE_PATH_NAME = "images/default_badge.jpg"
 FONT_PATH = "image/font/GarnetCapitals-Bold (1).ttf"
 
-def write_name_and_second_name_to_badge(name, second_name, time, vol_id):
+async def write_name_and_second_name_to_badge(name, second_name, time, vol_id):
     photo_name = ""
     with Image.open(IMAGE_PATH_NAME) as im:
 
@@ -40,7 +40,7 @@ def write_name_and_second_name_to_badge(name, second_name, time, vol_id):
     return photo_name
 
 
-def add_photo_to_badge(name_written_photo, user_photo):
+async def add_photo_to_badge(name_written_photo, user_photo):
     # Open the original image and the target background image
     original_image = Image.open(user_photo)
     background_image = Image.open(name_written_photo)
@@ -73,14 +73,13 @@ def add_photo_to_badge(name_written_photo, user_photo):
     # Step 5: Save the result
     background_image.save(name_written_photo)
     print("cutted photo was placed on back photo!!!")
-    background_image.show()
-
     background_image.close()
 
     return name_written_photo
 
-def prepare_badge(firstname, lastname, time, vol_id, photo):
-    photo_path = write_name_and_second_name_to_badge(firstname,lastname, time, vol_id)
-    return add_photo_to_badge(photo_path, photo)
+async def prepare_badge(firstname, lastname, time, vol_id, photo):
+    photo_path = await write_name_and_second_name_to_badge(firstname,lastname, time, vol_id)
+    photo_path = await add_photo_to_badge(photo_path, photo)
 
+    return photo_path
 

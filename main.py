@@ -1,15 +1,15 @@
 from telegram import Update
 from telegram.ext import Application, ConversationHandler, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 
-from bot.service import PHOTO, photo, bio, cancel, start, \
-    language, BIO, LANGUAGE, FULLNAME, fullname, FULLNAME
+from bot.service import PHOTO, photo, start, language, LANGUAGE, fullname, FULLNAME, get_chat_id, REGENERATE, \
+    regenerate, PHOTO_TO_REGENERATE, photo_regenerate, error_handler
 from config import BOT_TOKEN
 
 
 def main() -> None:
     """Run the bot."""
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token(BOT_TOKEN).build()
+    application = Application.builder().token(BOT_TOKEN).pool_timeout(60).build()
 
     # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
     conv_handler = ConversationHandler(
@@ -17,13 +17,16 @@ def main() -> None:
         states={
             LANGUAGE: [CallbackQueryHandler(language)],
             FULLNAME: [MessageHandler(filters.TEXT, fullname)],
+            REGENERATE: [CommandHandler("regenerate", regenerate)],
+            PHOTO_TO_REGENERATE: [MessageHandler(filters.PHOTO, photo_regenerate)],
             PHOTO: [MessageHandler(filters.PHOTO, photo)],
-            BIO: [MessageHandler(filters.TEXT & ~filters.COMMAND, bio)],
         },
-        fallbacks=[CommandHandler("cancel", cancel)]
+        fallbacks=[]
     )
 
     application.add_handler(conv_handler)
+    application.add_handler(CommandHandler("get_chat_id", get_chat_id))
+    application.add_error_handler(error_handler)
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
