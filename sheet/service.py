@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from bot.models.user import User
 from config import GOOGLE_SHEET_URL, KEYS_PATH
 
 
@@ -36,7 +37,7 @@ async def get_values_from_sheet():
         return []
 
 
-async def update_allowing():
+async def update_allowing(user: User):
     pass
 
 async def update_given():
