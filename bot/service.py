@@ -130,11 +130,12 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     with open(f"images/user_photo/{context.user_data.get("fullname")}.jpg", "rb") as photo:
         await context.bot.send_photo(chat_id=GROUP_CHAT_ID, photo=photo, caption=caption)
         await context.bot.send_message(chat_id=GROUP_CHAT_ID,
-                                       text="please send your answer like this\n@register0815bot user_id: ✅/❌")
+                                       text="shu ko'rinishda javob bering:\n@register0815bot user_id: ✅/❌")
 
     logger.info("Photo of %s: %s sent to group", user.first_name,
                 f"images/user_photo/{context.user_data.get("fullname")}.jpg")
 
+    # todo should add multiple language
     await update.message.reply_text(
         "Gorgeous! Now, I sent your infos to admins, I will send your badge asap if they allow me. Wait me..."
     )
@@ -143,7 +144,8 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                                         context.user_data.get("time"),
                                         context.user_data.get("vol_id"),
                                         f"images/user_photo/{context.user_data.get("fullname")}.jpg",
-                                        f"{update.effective_user.id}"))
+                                        f"{update.effective_user.id}",
+                                        context.user_data.get("language")))
 
     return ConversationHandler.END
 
@@ -199,6 +201,7 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     with open(photo_name, "rb") as prepared_badge:
                         logging.info("Photo opened for sending to user!")
 
+                        # todo should add multiple language
                         await context.bot.send_photo(chat_id=user.get_chat_id(),
                                                      photo=prepared_badge,
                                                      caption="Your badge is ready😇, please join our channel @volunteers_uz !!!")
@@ -209,6 +212,7 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                     if os.path.exists(photo_name):
                         os.remove(photo_name)  # Delete the file
+                        os.remove(user.get_user_photo())  # Delete the file
                         print(f"The file {photo_name} has been deleted successfully.")
                     else:
                         print(f"The file {photo_name} does not exist.")
@@ -219,6 +223,7 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await context.bot.send_message(chat_id=GROUP_CHAT_ID,
                                                    text=f"{user.get_fullname()} ga badge olishiga ruxsat berilmadi❌")
 
+                    #todo should add multiple language
                     await context.bot.send_message(chat_id=user.get_chat_id(), text= "Sorry😞, our admins don't allow to give you a badge😭")
 
                     return
@@ -254,5 +259,12 @@ async def photo_regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         await update.message.reply_photo(prepared_badge,
                                          caption="Your badge is ready😇, please join our channel @volunteers_uz !!!")
         logging.info("Photo sent successfully to user <3 ")
+
+    if os.path.exists(photo_name):
+        os.remove(photo_name)  # Delete the file
+        os.remove(f"images/user_photo/{context.user_data.get("fullname")}.jpg")  # Delete the file
+        print(f"The file {photo_name} has been deleted successfully.")
+    else:
+        print(f"The file {photo_name} does not exist.")
 
     return ConversationHandler.END
