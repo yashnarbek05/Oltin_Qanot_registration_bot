@@ -1,12 +1,8 @@
-import asyncio
-
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from bot.models.user import User
 from config import GOOGLE_SHEET_URL, KEYS_PATH
-
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
@@ -35,6 +31,7 @@ async def get_values_from_sheet():
         print(f"An unexpected error occurred: {e}")
         return []
 
+
 async def update_allowing(index: int, allowed: bool):
     # is_allowed = N row
     request = service.spreadsheets().values().update(spreadsheetId=GOOGLE_SHEET_URL, range=f'sheet1!N{index + 1}',
@@ -44,12 +41,13 @@ async def update_allowing(index: int, allowed: bool):
 
     return response.get("updatedRows"), allowed
 
+
 async def update_given(index: int, given: bool):
     # is_given   = M row
 
-
-    request = service.spreadsheets().values().update(spreadsheetId=GOOGLE_SHEET_URL, range=f'sheet1!M{index+1}', valueInputOption="RAW",
-                                                     body={"values":[[given]]})
+    request = service.spreadsheets().values().update(spreadsheetId=GOOGLE_SHEET_URL, range=f'sheet1!M{index + 1}',
+                                                     valueInputOption="RAW",
+                                                     body={"values": [[given]]})
     response = request.execute()
 
     return response.get("updatedRows"), given

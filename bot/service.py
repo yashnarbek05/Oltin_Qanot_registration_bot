@@ -162,14 +162,17 @@ async def error_handler(update: Update, context: CallbackContext):
     """Log the error and send a message to the user."""
     # Log the error
     logger.error(f"Exception occurred: {context.error}")
+    await context.bot.send_message(chat_id=GROUP_CHAT_ID,
+                             text=f"Xatolik yuz berdi😢: \n\n{context.error}")
 
     # Optionally, send a message to the user (if the update is available)
     if update:
         await update.message.reply_text("Oops! Something went wrong. Please try again later.")
+        return ConversationHandler.END
 
 
 async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.chat.type == "group" or update.message.chat.type == "supergroup":
+    if (update.message.chat.type == "group" or update.message.chat.type == "supergroup") and update.message.chat_id == GROUP_CHAT_ID:
         # Get the message text
         received_message = update.message.text
         print(received_message)
@@ -252,7 +255,9 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await context.bot.send_message(chat_id=GROUP_CHAT_ID,
                                        text=f"Bunday {received_message_split[1].replace(":", "")} idli odam topilmadi!")
-
+    else:
+        await context.bot.send_message(chat_id=update.message.chat_id,
+                                       text="Uzur, bu bot sizning guruhingiz uchun emas!\nThis bot is not working in your group😣")
 
 async def regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # todo should add multiple language

@@ -187,7 +187,6 @@ config.py
 # AWS User-specific
 .idea/**/aws.xml
 
-config.py
 sheet/oltin-qanot-uchun.json
 # Generated files
 .idea/**/contentModel.xml
