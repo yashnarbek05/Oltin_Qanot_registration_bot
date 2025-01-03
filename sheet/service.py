@@ -9,9 +9,8 @@ from config import GOOGLE_SHEET_URL, KEYS_PATH
 
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-SERVICE_ACCOUNT_FILE = KEYS_PATH
 
-creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+creds = Credentials.from_service_account_file(KEYS_PATH, scopes=SCOPES)
 
 service = build("sheets", "v4", credentials=creds)
 sheet = service.spreadsheets()
@@ -21,7 +20,7 @@ async def get_values_from_sheet():
     try:
         result = sheet.values().get(
             spreadsheetId=GOOGLE_SHEET_URL,
-            range="sheet 1"
+            range="sheet1"
         ).execute()
 
         values = result.get("values", [])
@@ -37,8 +36,21 @@ async def get_values_from_sheet():
         return []
 
 
-async def update_allowing(user: User):
-    pass
+async def update_allowing(index: int, allowed: bool):
+    # is_allowed = N row
+    request = service.spreadsheets().values().update(spreadsheetId=GOOGLE_SHEET_URL, range=f'sheet1!N{index + 1}',
+                                                     valueInputOption="RAW",
+                                                     body={"values": [[allowed]]})
+    response = request.execute()
 
-async def update_given():
-    pass
+    return response.get("updatedRows"), allowed
+
+async def update_given(index: int, given: bool):
+    # is_given   = M row
+
+
+    request = service.spreadsheets().values().update(spreadsheetId=GOOGLE_SHEET_URL, range=f'sheet1!M{index+1}', valueInputOption="RAW",
+                                                     body={"values":[[given]]})
+    response = request.execute()
+
+    return response.get("updatedRows"), given

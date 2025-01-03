@@ -10,7 +10,7 @@ from telegram.ext import (
 from bot.models.user import User
 from config import GROUP_CHAT_ID, VOLUNTEER_ID_BEGINNING
 from image.service import prepare_badge
-from sheet.service import get_values_from_sheet, update_allowing
+from sheet.service import get_values_from_sheet, update_allowing, update_given
 
 # Enable logging
 logging.basicConfig(
@@ -81,6 +81,7 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(
             "You did not registrate from website"
         )
+        return
     else:
         for i in range(1, len(excel_document)):
             if (user_fullname.lower() in excel_document[i][2].lower()
@@ -145,7 +146,8 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                                         context.user_data.get("vol_id"),
                                         f"images/user_photo/{context.user_data.get("fullname")}.jpg",
                                         f"{update.effective_user.id}",
-                                        context.user_data.get("language")))
+                                        context.user_data.get("language"),
+                                        context.user_data.get("vol_id") - VOLUNTEER_ID_BEGINNING))
 
     return ConversationHandler.END
 
@@ -174,7 +176,7 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         received_message_split = received_message.split(" ")
 
-        if received_message_split[0] != "@"+context.bot.username:
+        if received_message_split[0] != "@" + context.bot.username:
             print(context.bot.username, " yoq ekan!!")
             return
 
@@ -189,7 +191,10 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 print("id topildi:", user.get_chat_id())
 
                 if received_message_split[2] == "✅":
-                    await update_allowing(user)
+                    updated2, allowed = await update_allowing(user.get_sheet_id(), True)
+
+                    logging.info(f"{updated2} rows updated to {allowed}!!! ")
+                    logging.info(f"index = {user.get_sheet_id()} ")
 
                     await context.bot.send_message(chat_id=GROUP_CHAT_ID,
                                                    text=f"{user.get_fullname()} ga badge olishiga ruxsat berildi✅")
@@ -206,7 +211,9 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                                      photo=prepared_badge,
                                                      caption="Your badge is ready😇, please join our channel @volunteers_uz !!!")
 
+                        updated1, given = await update_given(user.get_sheet_id(), True)
                         logging.info("Photo sent successfully to user <3 ")
+                        logging.info(f"{updated1} rows updated to {given}!!! ")
 
                     users_apply_certificate.pop(i)
 
@@ -223,8 +230,9 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await context.bot.send_message(chat_id=GROUP_CHAT_ID,
                                                    text=f"{user.get_fullname()} ga badge olishiga ruxsat berilmadi❌")
 
-                    #todo should add multiple language
-                    await context.bot.send_message(chat_id=user.get_chat_id(), text= "Sorry😞, our admins don't allow to give you a badge😭")
+                    # todo should add multiple language
+                    await context.bot.send_message(chat_id=user.get_chat_id(),
+                                                   text="Sorry😞, our admins don't allow to give you a badge😭")
 
                     return
 
@@ -238,6 +246,7 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    # todo should add multiple language
     await update.message.reply_text(
         "Now send me photo: "
     )
@@ -253,7 +262,7 @@ async def photo_regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     photo_name = await prepare_badge(context.user_data.get("fullname"), context.user_data.get("time"),
                                      str(context.user_data.get("vol_id")),
                                      f"images/user_photo/{context.user_data.get("fullname")}.jpg")
-
+    # todo should add multiple language
     with open(photo_name, "rb") as prepared_badge:
         logging.info("Photo opened for sending to user!")
         await update.message.reply_photo(prepared_badge,
