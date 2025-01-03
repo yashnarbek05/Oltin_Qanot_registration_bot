@@ -79,9 +79,9 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     if len(excel_document) <= 1:
         await update.message.reply_text(
-            "You did not registrate from website"
+            "You did not registrate from website yet!"
         )
-        return
+        return ConversationHandler.END
     else:
         for i in range(1, len(excel_document)):
             if (user_fullname.lower() in excel_document[i][2].lower()
@@ -233,6 +233,15 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     # todo should add multiple language
                     await context.bot.send_message(chat_id=user.get_chat_id(),
                                                    text="Sorry😞, our admins don't allow to give you a badge😭")
+
+                    updated2, allowed = await update_allowing(user.get_sheet_id(), False)
+
+                    logging.info(f"{updated2} rows updated to {allowed}!!! ")
+
+                    updated1, given = await update_given(user.get_sheet_id(), False)
+
+                    logging.info(f"{updated1} rows updated to {given}!!! ")
+
 
                     return
 

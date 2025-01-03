@@ -35,7 +35,6 @@ async def get_values_from_sheet():
         print(f"An unexpected error occurred: {e}")
         return []
 
-
 async def update_allowing(index: int, allowed: bool):
     # is_allowed = N row
     request = service.spreadsheets().values().update(spreadsheetId=GOOGLE_SHEET_URL, range=f'sheet1!N{index + 1}',
