@@ -1,6 +1,7 @@
 import logging
 import os
 
+import telegram
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     ContextTypes,
@@ -54,9 +55,9 @@ async def language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await query.answer("Progress...")
 
     messages = {
-        'en': f"Hello {query.from_user.first_name}! Enter your fullname which you entered to registeration website:",
-        'ru': f"Здравствуйте, {query.from_user.first_name}! Введите свое полное имя, которое вы указали на сайте регистрации:",
-        'uz': f"Assalomu alaykum {query.from_user.first_name}! Ro'yxatdan o'tish veb-saytiga kiritgan to'liq ismingizni kiriting:"
+        'en': f"Hello, {query.from_user.first_name}! Enter the full name you filled in the membership form:",
+        'ru': f"Здравствуйте, {query.from_user.first_name}! Введите полное имя, которое вы указали в форме членства:",
+        'uz': f"Assalomu alaykum, {query.from_user.first_name}! A'zolik anketasida toʻldirgan toʻliq ism va familiyangizni kiriting:"
     }
 
     await query.edit_message_text(text=messages.get(query.data))
@@ -72,9 +73,16 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     logger.info("name of %s: %s", user.first_name, user_fullname)
 
+    messages = {
+        'uz': "Iltimos, kuting, men sizning ismingizni ro'yxatdan o'tgan odamlar ro'yxatidan qidiryapman ...",
+        'ru': 'Пожалуйста, подождите, я ищу ваше имя в списке зарегистрированных людей…',
+        'en': "Please wait, I am searching your name from registreted people's list..."
+    }
+
     await update.message.reply_text(
-        "Please wait, I am searching your name from registreted people's list..."
+        messages.get(context.user_data.get("language"))
     )
+
     excel_document = await get_values_from_sheet()
 
     if len(excel_document) <= 1:
@@ -85,12 +93,19 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     else:
         for i in range(1, len(excel_document)):
             if (user_fullname.lower() in excel_document[i][2].lower()
-                    and excel_document[i][12] == 'FALSE'  # is_given
-                    and excel_document[i][13] == 'FALSE'  # is_allowed
+                    and False if not excel_document[i][12] or excel_document[i][12] == 'FALSE' else True  # is_given
+                    and False if not excel_document[i][13] or excel_document[i][13] == 'FALSE' else True # is_allowed
             ):
-                await update.message.reply_text(
-                    "Ok, you registreted from website, now send me photo:"
+                messages = {
+                    'uz': "Sizning roʻyxatdan oʻtganingiz tasdiqlandi. Bizga rasmiy rasmingizni yuboring.\nRasm talablari:\n1. Tiniq va yuz qism toʻliq tushsin.\n2. Rasm oʻlchamiga eʼtibor bering. \n3. Yoki namunaga qarang",
+                    'ru': 'Ваша регистрация подтверждена. Пожалуйста, пришлите нам свою официальную фотографию.\nТребования к фотографии:\n1. Четкое и анфас.\n2. Обратите внимание на размер фотографии. \n3. Или посмотрите образец',
+                    'en': "Your registration has been confirmed. Please send us your official photo.\nPhoto requirements:\n1. Clear and full face.\n2. Pay attention to the size of the photo. \n3. Or see a sample"
+                }
+
+                await update.message.reply_photo("images/example_avatar_photo.png",
+                    caption=messages.get(context.user_data.get("language"))
                 )
+
                 context.user_data['fullname'] = excel_document[i][2]
                 context.user_data['time'] = excel_document[i][0]
                 context.user_data['vol_id'] = i + VOLUNTEER_ID_BEGINNING
@@ -99,8 +114,14 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             elif (user_fullname.lower() in excel_document[i][2].lower()
                   and excel_document[i][12] == 'TRUE'  # is_given
             ):
+                messages = {
+                    'uz': "Men sizning guvohnomangizni allaqachon yaratdim, agar qayta tiklamoqchi bo'lsangiz, \n/regenerate yuboring...",
+                    'ru': 'Я уже создал ваш бежик, отправьте \n/regenerate, если хотите восстановить…',
+                    'en': "I generated your badge already, send \n/regenerate if you want regenerate..."
+                }
+
                 await update.message.reply_text(
-                    "I generated your badge already, send \n/regenerate if you want regenerate..."
+                    messages.get(context.user_data.get("language"))
                 )
 
                 context.user_data['fullname'] = excel_document[i][2]
@@ -111,8 +132,14 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
                 return REGENERATE
 
+    messages = {
+        'uz': 'Roʻyxatdan oʻtganlar roʻyxatidan toʻliq ismingizni topa olmadik, avval volunteers.uz dan roʻyxatdan oʻting, keyin /start yuboring',
+        'ru': "Мы не можем найти ваше полное имя в списке зарегистрированных людей, сначала зарегистрируйтесь на сайте Volunters.uz, затем отправьте /start",
+        'en': "We can't find your fullname from registreted people's list, first register from volunteers.uz, then send /start"
+    }
+
     await update.message.reply_text(
-        "We can't find your fullname from registreted people's list, first register from volunteers.uz, then send /start"
+        messages.get(context.user_data.get("language"))
     )
     return ConversationHandler.END
 
@@ -124,21 +151,28 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await photo_file.download_to_drive(f"images/user_photo/{context.user_data.get("fullname")}.jpg")
 
     caption = (f"New volunteer🥳 \n\nuser-id: "
-               + f"{update.effective_user.id}"
+               + f"`{update.effective_user.id}`"
                + f"\nfull-name: {context.user_data.get("fullname")}"
                  f"\nJoined: {context.user_data.get('time')}")
 
+
+
     with open(f"images/user_photo/{context.user_data.get("fullname")}.jpg", "rb") as photo:
-        await context.bot.send_photo(chat_id=GROUP_CHAT_ID, photo=photo, caption=caption)
+        await context.bot.send_photo(chat_id=GROUP_CHAT_ID, photo=photo, caption=caption, parse_mode="Markdown")
         await context.bot.send_message(chat_id=GROUP_CHAT_ID,
-                                       text="shu ko'rinishda javob bering:\n@register0815bot user_id: ✅/❌")
+                                       text=f"shu ko'rinishda javob bering:\n@{context.bot.username} user_id: ✅/❌ [cause]")
 
     logger.info("Photo of %s: %s sent to group", user.first_name,
                 f"images/user_photo/{context.user_data.get("fullname")}.jpg")
 
-    # todo should add multiple language
+    messages = {
+        'uz': "Ajoyib! Endi maʼlumotlaringizni adminlarga joʻnatdim, ruxsat berishsa tez orada guvohnomangizni yuboraman. Meni kuting...",
+        'ru': "Отлично! Теперь я отправил ваши данные администраторам, если они мне позволят, то пришлю ваши бежик в ближайшее время. Подождите меня...",
+        'en': "Great! Now I've sent your details to the admins, I'll send your credentials soon if they'll let me. Wait for me..."
+    }
+
     await update.message.reply_text(
-        "Gorgeous! Now, I sent your infos to admins, I will send your badge asap if they allow me. Wait me..."
+        messages.get(context.user_data.get("language"))
     )
 
     users_apply_certificate.append(User(context.user_data.get("fullname"),
@@ -155,6 +189,7 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send the group chat ID."""
     chat_id = update.effective_chat.id
+    logger.info(f"This chat's ID is: {chat_id}")
     await update.message.reply_text(f"This chat's ID is: {chat_id}")
 
 
@@ -163,12 +198,8 @@ async def error_handler(update: Update, context: CallbackContext):
     # Log the error
     logger.error(f"Exception occurred: {context.error}")
     await context.bot.send_message(chat_id=GROUP_CHAT_ID,
-                             text=f"Xatolik yuz berdi😢: \n\n{context.error}")
+                                   text=f"Xatolik yuz berdi😢: \n\n{context.error}")
 
-    # Optionally, send a message to the user (if the update is available)
-    if update:
-        await update.message.reply_text("Oops! Something went wrong. Please try again later.")
-        return ConversationHandler.END
 
 
 async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -177,13 +208,14 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
         received_message = update.message.text
         print(received_message)
 
-        received_message_split = received_message.split(" ")
+        received_message_split = received_message.split(" ", 3)
 
         if received_message_split[0] != "@" + context.bot.username:
             print(context.bot.username, " yoq ekan!!")
             return
 
         print(received_message_split[2].replace(":", ""))
+
 
         user = ""
         for i in range(len(users_apply_certificate)):
@@ -200,7 +232,7 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     logging.info(f"index = {user.get_sheet_id()} ")
 
                     await context.bot.send_message(chat_id=GROUP_CHAT_ID,
-                                                   text=f"{user.get_fullname()} ga badge olishiga ruxsat berildi✅")
+                                                   text=f"{user.get_fullname()} ga guvohnoma olishiga ruxsat berildi✅")
 
                     photo_name = await prepare_badge(user.get_fullname(), user.get_time(),
                                                      str(user.get_vol_id()),
@@ -231,11 +263,11 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 elif received_message_split[2] == "❌":
                     await context.bot.send_message(chat_id=GROUP_CHAT_ID,
-                                                   text=f"{user.get_fullname()} ga badge olishiga ruxsat berilmadi❌")
+                                                   text=f"{user.get_fullname()} ga guvohnoma olishiga ruxsat berilmadi❌")
 
                     # todo should add multiple language
                     await context.bot.send_message(chat_id=user.get_chat_id(),
-                                                   text="Sorry😞, our admins don't allow to give you a badge😭")
+                                                   text=f"Sorry😞, our admins don't allow to give you a badge😭\ncause: {received_message_split[3]}")
 
                     updated2, allowed = await update_allowing(user.get_sheet_id(), False)
 
@@ -244,7 +276,7 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     updated1, given = await update_given(user.get_sheet_id(), False)
 
                     logging.info(f"{updated1} rows updated to {given}!!! ")
-
+                    users_apply_certificate.pop(i)
 
                     return
 
@@ -255,9 +287,10 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await context.bot.send_message(chat_id=GROUP_CHAT_ID,
                                        text=f"Bunday {received_message_split[1].replace(":", "")} idli odam topilmadi!")
-    else:
+    elif (update.message.chat.type == "group" or update.message.chat.type == "supergroup") and update.message.chat_id != GROUP_CHAT_ID:
         await context.bot.send_message(chat_id=update.message.chat_id,
                                        text="Uzur, bu bot sizning guruhingiz uchun emas!\nThis bot is not working in your group😣")
+
 
 async def regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # todo should add multiple language

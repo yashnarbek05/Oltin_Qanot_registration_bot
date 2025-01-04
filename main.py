@@ -13,6 +13,8 @@ def main() -> None:
     application = ApplicationBuilder().token(BOT_TOKEN).read_timeout(300).write_timeout(300).build()
 
     # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
+    application.add_handler(CommandHandler("get_chat_id", get_chat_id))
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -27,7 +29,6 @@ def main() -> None:
 
     application.add_handler(conv_handler)
     application.add_handler(MessageHandler(filters.TEXT, admin_response))
-    application.add_handler(CommandHandler("get_chat_id", get_chat_id))
     application.add_error_handler(error_handler)
 
     # Run the bot until the user presses Ctrl-C
