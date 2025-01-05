@@ -29,7 +29,6 @@ PHOTO_TO_REGENERATE = 7
 
 users_apply_certificate = list()
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Starts the conversation and asks the user about their gender."""
     keyboard = [
@@ -234,17 +233,22 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await context.bot.send_message(chat_id=GROUP_CHAT_ID,
                                                    text=f"{user.get_fullname()} ga guvohnoma olishiga ruxsat berildi✅")
 
-                    photo_name = await prepare_badge(user.get_fullname(), user.get_time(),
+                    photo_name = await prepare_badge(user.get_fullname(),
                                                      str(user.get_vol_id()),
                                                      user.get_user_photo())
 
                     with open(photo_name, "rb") as prepared_badge:
                         logging.info("Photo opened for sending to user!")
 
-                        # todo should add multiple language
+                        messages = {
+                            'uz': "Tabriklaymiz🎉, sizning  guvohnomangiz tayyor bo'ldi. Volontyorlik faoliyatingizga omad tilaymiz. Volontyorlik oilamizga xush kelibsiz🤗\nKanalimizga obuna bo'ling: @Volunteers_uz",
+                            'ru': 'Поздравляем🎉, ваш сертификат готов. Удачи в вашем волонтерстве. Добро пожаловать в нашу волонтерскую семью🤗\nПодпишитесь на наш канал: @Volunteers_uz',
+                            'en': "Congratulations🎉, your certificate is ready. Good luck with your volunteering. Welcome to our volunteer family🤗\nSubscribe to our channel: @Volunteers_uz"
+                        }
+
                         await context.bot.send_photo(chat_id=user.get_chat_id(),
                                                      photo=prepared_badge,
-                                                     caption="Your badge is ready😇, please join our channel @volunteers_uz !!!")
+                                                     caption=messages.get(context.user_data.get("language")))
 
                         updated1, given = await update_given(user.get_sheet_id(), True)
                         logging.info("Photo sent successfully to user <3 ")
@@ -265,9 +269,14 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await context.bot.send_message(chat_id=GROUP_CHAT_ID,
                                                    text=f"{user.get_fullname()} ga guvohnoma olishiga ruxsat berilmadi❌")
 
-                    # todo should add multiple language
+                    messages = {
+                        'uz': f"Uzur, sizing yuborgan ma'lumotlaringiz adminlar tomonidan rad etildi.\n{'' if len(received_message_split) < 4 else "sabab: " + received_message_split[3]}",
+                        'ru': f"К сожалению, предоставленная вами информация была отклонена администраторами.\n{'' if len(received_message_split) < 4 else "причина: " + received_message_split[3]}",
+                        'en': f"Sorry, your submitted information has been rejected by admins.\n{'' if len(received_message_split) < 4 else "cause: " + received_message_split[3]}"
+                    }
+
                     await context.bot.send_message(chat_id=user.get_chat_id(),
-                                                   text=f"Sorry😞, our admins don't allow to give you a badge😭\ncause: {'' if len(received_message_split) < 4 else received_message_split[3]}")
+                                                   text=messages.get(context.user_data.get("language")))
 
                     updated2, allowed = await update_allowing(user.get_sheet_id(), False)
 
@@ -294,27 +303,46 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    # todo should add multiple language
-    await update.message.reply_text(
-        "Now send me photo: "
-    )
+    messages = {
+        'uz': "Bizga rasmiy rasmingizni yuboring.\nRasm talablari:\n1. Tiniq va yuz qism toʻliq tushsin.\n2. Rasm oʻlchamiga eʼtibor bering. \n3. Yoki namunaga qarang",
+        'ru': 'Пожалуйста, пришлите нам свою официальную фотографию.\nТребования к фотографии:\n1. Четкое и анфас.\n2. Обратите внимание на размер фотографии. \n3. Или посмотрите образец',
+        'en': "Please send us your official photo.\nPhoto requirements:\n1. Clear and full face.\n2. Pay attention to the size of the photo. \n3. Or see a sample"
+    }
+
+    await update.message.reply_photo("images/example_avatar_photo.png",
+                                     caption=messages.get(context.user_data.get("language"))
+                                     )
     return PHOTO_TO_REGENERATE
 
 
 async def photo_regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Please wait. I am preparing your badge...")
+
+    messages = {
+        'uz': "Iltimos kuting. Men sizning guvohnomangizni tayyorlayapman ...",
+        'ru': "Пожалуйста, подождите. Я готовлю твой бежик...",
+        'en': "Please wait. I am preparing your badge..."
+    }
+    await update.message.reply_text(
+        messages.get(context.user_data.get("language"))
+    )
+
 
     photo_file = await update.message.photo[-1].get_file()
     await photo_file.download_to_drive(f"images/user_photo/{context.user_data.get("fullname")}.jpg")
 
-    photo_name = await prepare_badge(context.user_data.get("fullname"), context.user_data.get("time"),
+    photo_name = await prepare_badge(context.user_data.get("fullname"),
                                      str(context.user_data.get("vol_id")),
                                      f"images/user_photo/{context.user_data.get("fullname")}.jpg")
-    # todo should add multiple language
+    messages = {
+        'uz': "Tabriklaymiz🎉, sizning  guvohnomangiz tayyor bo'ldi. Volontyorlik faoliyatingizga omad tilaymiz. Volontyorlik oilamizga xush kelibsiz🤗\nKanalimizga obuna bo'ling: @Volunteers_uz",
+        'ru': 'Поздравляем🎉, ваш сертификат готов. Удачи в вашем волонтерстве. Добро пожаловать в нашу волонтерскую семью🤗\nПодпишитесь на наш канал: @Volunteers_uz',
+        'en': "Congratulations🎉, your certificate is ready. Good luck with your volunteering. Welcome to our volunteer family🤗\nSubscribe to our channel: @Volunteers_uz"
+    }
+
     with open(photo_name, "rb") as prepared_badge:
         logging.info("Photo opened for sending to user!")
         await update.message.reply_photo(prepared_badge,
-                                         caption="Your badge is ready😇, please join our channel @volunteers_uz !!!")
+                                         caption=messages.get(context.user_data.get("language")))
         logging.info("Photo sent successfully to user <3 ")
 
     if os.path.exists(photo_name):

@@ -1,16 +1,18 @@
+from datetime import datetime
+
 from PIL import ImageFont, ImageDraw, Image
 
 IMAGE_PATH_NAME = "images/default_badge.jpg"
 FONT_PATH = "image/font/GarnetCapitals-Bold (1).ttf"
 
 
-async def write_name_and_second_name_to_badge(fullname, time, vol_id):
+async def write_name_and_second_name_to_badge(fullname, vol_id):
     photo_name = ""
     with Image.open(IMAGE_PATH_NAME) as im:
         print("photo opened for time and name")
         draw = ImageDraw.Draw(im)
 
-        names = fullname.split(" ")
+        names = fullname.split(" ")  # Sattorov Yashnarbek Quvonchbek o'g'li
         name = names[0]
         second_name = names[1]
 
@@ -33,7 +35,7 @@ async def write_name_and_second_name_to_badge(fullname, time, vol_id):
         draw.text(((width / 4) + 350, (height * 3 / 4) - 300), str(vol_id), font=ImageFont.truetype(FONT_PATH, 120))
         print("id is written!!!!!!!")
 
-        draw.text(((width / 4) + 250, (height * 3 / 4) + 50), time.split(" ").pop(0),
+        draw.text(((width / 4) + 250, (height * 3 / 4) + 50), datetime.now().strftime("%d.%m.%Y"),
                   font=ImageFont.truetype(FONT_PATH, 120))
 
         print("time is written!!!!!!!")
@@ -87,8 +89,8 @@ async def add_photo_to_badge(name_written_photo, user_photo):
     return name_written_photo
 
 
-async def prepare_badge(fullname, time, vol_id, photo):
-    photo_path = await write_name_and_second_name_to_badge(fullname, time, vol_id)
+async def prepare_badge(fullname, vol_id, photo):
+    photo_path = await write_name_and_second_name_to_badge(fullname, vol_id)
     photo_path = await add_photo_to_badge(photo_path, photo)
 
     return photo_path
