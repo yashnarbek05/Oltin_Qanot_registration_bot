@@ -3,8 +3,8 @@ from telegram.ext import ConversationHandler, CommandHandler, MessageHandler, fi
     CallbackQueryHandler, ApplicationBuilder
 
 from bot.service import PHOTO, photo, start, language, LANGUAGE, fullname, FULLNAME, get_chat_id, REGENERATE, \
-    regenerate, PHOTO_TO_REGENERATE, photo_regenerate, error_handler, admin_response
-from config import BOT_TOKEN
+    regenerate, PHOTO_TO_REGENERATE, photo_regenerate, error_handler, admin_response, cancel, leave_group
+from config import BOT_TOKEN, GROUP_CHAT_ID
 
 
 def main() -> None:
@@ -15,6 +15,8 @@ def main() -> None:
     # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
     application.add_handler(CommandHandler("get_chat_id", get_chat_id))
 
+    application.add_handler(MessageHandler(~filters.ChatType.PRIVATE & ~filters.Chat(GROUP_CHAT_ID), leave_group))
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -24,7 +26,7 @@ def main() -> None:
             PHOTO_TO_REGENERATE: [MessageHandler(filters.PHOTO, photo_regenerate)],
             PHOTO: [MessageHandler(filters.PHOTO, photo)],
         },
-        fallbacks=[]
+        fallbacks=[CommandHandler('cancel', cancel)]
     )
 
     application.add_handler(conv_handler)
@@ -33,7 +35,6 @@ def main() -> None:
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
-
 
 if __name__ == "__main__":
     main()

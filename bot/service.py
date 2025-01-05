@@ -26,8 +26,8 @@ LANGUAGE = 0
 REGENERATE = 6
 PHOTO_TO_REGENERATE = 7
 
-
 users_apply_certificate = list()
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Starts the conversation and asks the user about their gender."""
@@ -81,7 +81,6 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
 
     excel_document = await get_values_from_sheet()
-
 
     if len(excel_document) <= 1:
         await update.message.reply_text(
@@ -200,6 +199,10 @@ async def error_handler(update: Update, context: CallbackContext):
                                    text=f"Xatolik yuz berdi😢: \n\n{context.error}")
 
 
+async def cancel(update: Update, context: CallbackContext):
+    return ConversationHandler.END
+
+
 async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if (
             update.message.chat.type == "group" or update.message.chat.type == "supergroup") and update.message.chat_id == GROUP_CHAT_ID:
@@ -209,9 +212,7 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
         received_message_split = received_message.split(" ", 3)
 
         if received_message_split[0] != "@" + context.bot.username:
-
             return
-
 
         user = ""
         for i in range(len(users_apply_certificate)):
@@ -219,8 +220,6 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user = users_apply_certificate[i]
 
             if received_message_split[1].replace(":", "") == user.get_chat_id():
-
-
 
                 if received_message_split[2] == "✅":
                     updated2, allowed = await update_allowing(user.get_sheet_id(), True)
@@ -299,10 +298,6 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await context.bot.send_message(chat_id=GROUP_CHAT_ID,
                                        text=f"Bunday {received_message_split[1].replace(':', '')} idli odam topilmadi!")
-    elif (
-            update.message.chat.type == "group" or update.message.chat.type == "supergroup") and update.message.chat_id != GROUP_CHAT_ID:
-        await context.bot.send_message(chat_id=update.message.chat_id,
-                                       text="Uzur, bu bot sizning guruhingiz uchun emas!\nThis bot is not working in your group😣")
 
 
 async def regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -319,7 +314,6 @@ async def regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def photo_regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-
     messages = {
         'uz': "Iltimos kuting. Men sizning guvohnomangizni tayyorlayapman ...",
         'ru': "Пожалуйста, подождите. Я готовлю твой бежик...",
@@ -328,7 +322,6 @@ async def photo_regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     await update.message.reply_text(
         messages.get(context.user_data.get('language'))
     )
-
 
     photo_file = await update.message.photo[-1].get_file()
     await photo_file.download_to_drive(f"images/user_photo/{context.user_data.get('fullname')}.jpg")
@@ -356,3 +349,9 @@ async def photo_regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         print(f"The file {photo_name} does not exist.")
 
     return ConversationHandler.END
+
+
+async def leave_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(chat_id=update.message.chat_id,
+                                   text="Uzur, bu bot sizning guruhingiz uchun emas!\nThis bot is not working in your group😣")
+    await context.bot.leave_chat(update.message.chat_id)
