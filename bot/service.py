@@ -287,6 +287,12 @@ async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     logging.info(f"{updated1} rows updated to {given}!!! ")
                     users_apply_certificate.pop(i)
 
+                    if os.path.exists(user.get_user_photo()):
+                        os.remove(user.get_user_photo())  # Delete the file
+                        print(f"The file {user.get_user_photo()} has been deleted successfully.")
+                    else:
+                        print(f"The file {user.get_user_photo()} does not exist.")
+
                     return
 
                 else:
