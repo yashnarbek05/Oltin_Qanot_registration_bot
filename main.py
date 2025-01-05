@@ -21,9 +21,9 @@ def main() -> None:
         entry_points=[CommandHandler("start", start)],
         states={
             LANGUAGE: [CallbackQueryHandler(language)],
-            FULLNAME: [MessageHandler(filters.TEXT, fullname)],
+            FULLNAME: [CommandHandler('cancel', cancel), MessageHandler(filters.TEXT, fullname)],
             REGENERATE: [CommandHandler("regenerate", regenerate)],
-            PHOTO_TO_REGENERATE: [MessageHandler(filters.PHOTO, photo_regenerate)],
+            PHOTO_TO_REGENERATE: [CommandHandler('cancel', cancel), MessageHandler(filters.PHOTO, photo_regenerate)],
             PHOTO: [MessageHandler(filters.PHOTO, photo)],
         },
         fallbacks=[CommandHandler('cancel', cancel)]

@@ -200,6 +200,12 @@ async def error_handler(update: Update, context: CallbackContext):
 
 
 async def cancel(update: Update, context: CallbackContext):
+    messages = {
+        'uz': 'Bekor qilindi!',
+        'ru': 'Отменено!',
+        'en': 'Cancelled!'
+    }
+    await update.message.reply_text(messages.get(context.user_data.get('language')))
     return ConversationHandler.END
 
 
