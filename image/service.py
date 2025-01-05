@@ -9,7 +9,6 @@ FONT_PATH = "image/font/GarnetCapitals-Bold (1).ttf"
 async def write_name_and_second_name_to_badge(fullname, vol_id):
     photo_name = ""
     with Image.open(IMAGE_PATH_NAME) as im:
-        print("photo opened for time and name")
         draw = ImageDraw.Draw(im)
 
         names = fullname.split(" ")  # Sattorov Yashnarbek Quvonchbek o'g'li
@@ -28,17 +27,15 @@ async def write_name_and_second_name_to_badge(fullname, vol_id):
                             font=font,
                             align="center")
 
-        print("name are written!!!!!!!")
 
         photo_name = f"images/{name}_{second_name}.png"
 
         draw.text(((width / 4) + 350, (height * 3 / 4) - 300), str(vol_id), font=ImageFont.truetype(FONT_PATH, 120))
-        print("id is written!!!!!!!")
+
 
         draw.text(((width / 4) + 250, (height * 3 / 4) + 50), datetime.now().strftime("%d.%m.%Y"),
                   font=ImageFont.truetype(FONT_PATH, 120))
 
-        print("time is written!!!!!!!")
 
         im.save(photo_name)
 
@@ -50,7 +47,6 @@ async def add_photo_to_badge(name_written_photo, user_photo):
     original_image = Image.open(user_photo)
     background_image = Image.open(name_written_photo)
 
-    print("photo opened for avatar placement!!!")
 
     # Ensure both images are of the same mode (e.g., RGB) for compatibility
     original_image = original_image.convert('RGBA')
@@ -66,7 +62,6 @@ async def add_photo_to_badge(name_written_photo, user_photo):
     circular_cutout = Image.new("RGBA", (r, r))
     circular_cutout.paste(original_image, (0, 0), mask=mask)  # Paste the image with the mask
 
-    print("photo is cutted!!!!!")
 
     # Step 4: Paste the circular cutout onto the background image
     bg_width, bg_height = background_image.size
@@ -76,14 +71,12 @@ async def add_photo_to_badge(name_written_photo, user_photo):
     y_offset = int((bg_width + 1000) // 4)  # Center vertically
     background_image.paste(circular_cutout, (x_offset, y_offset), circular_cutout)
 
-    print("bg_width:", bg_width)
-    print("bg_heigh:", bg_height)
 
     # Step 5: Save the result
     resized_image = background_image.resize((860,1200))
 
     resized_image.save(name_written_photo)
-    print("cutted photo was placed on back photo!!!")
+
     background_image.close()
 
     return name_written_photo

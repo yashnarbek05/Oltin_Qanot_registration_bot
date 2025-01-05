@@ -37,11 +37,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-    # excel_document = get_values_from_sheet()
-    # print(excel_document)
-    # fullname = excel_document[1][2].split(" ")
-    # print(fullname)
-    # firstname, lastname = fullname[0], fullname[1]
-    # print(firstname + " and " + lastname)
-    # prepare_badge(firstname, lastname, excel_document[1][0], 10, "images/я мечтала об этом котике.jpg")
