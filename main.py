@@ -17,6 +17,8 @@ def main() -> None:
 
     application.add_handler(MessageHandler(~filters.ChatType.PRIVATE & ~filters.Chat(GROUP_CHAT_ID), leave_group))
 
+    application.add_handler(MessageHandler(filters.Chat(GROUP_CHAT_ID), admin_response))
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -30,7 +32,6 @@ def main() -> None:
     )
 
     application.add_handler(conv_handler)
-    application.add_handler(MessageHandler(filters.TEXT, admin_response))
     application.add_error_handler(error_handler)
 
     # Run the bot until the user presses Ctrl-C

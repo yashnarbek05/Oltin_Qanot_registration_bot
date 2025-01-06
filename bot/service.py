@@ -361,3 +361,4 @@ async def leave_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.message.chat_id,
                                    text="Uzur, bu bot sizning guruhingiz uchun emas!\nThis bot is not working in your group😣")
     await context.bot.leave_chat(update.message.chat_id)
+
