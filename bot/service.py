@@ -134,7 +134,7 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     messages = {
         'uz': 'Roʻyxatdan oʻtganlar roʻyxatidan toʻliq ismingizni topa olmadik, avval volunteers.uz dan roʻyxatdan oʻting, keyin /start yuboring',
-        'ru': "Мы не можем найти ваше полное имя в списке зарегистрированных людей, сначала зарегистрируйтесь на сайте Volunters.uz, затем отправьте /start",
+        'ru': "Мы не можем найти ваше полное имя в списке зарегистрированных людей, сначала зарегистрируйтесь на сайте Volunteers.uz, затем отправьте /start",
         'en': "We can't find your fullname from registreted people's list, first register from volunteers.uz, then send /start"
     }
 
