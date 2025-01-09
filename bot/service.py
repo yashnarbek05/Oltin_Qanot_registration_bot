@@ -80,7 +80,7 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         messages.get(context.user_data.get('language'))
     )
 
-    result = all(char.isalpha() or char.isspace() for char in user_fullname)
+    result = all(not char.isdigit() for char in user_fullname)
     messages = {
         'uz': f"Siz to'liq ismingizni noto'g'ri kiritdingiz, \"{user_fullname}\"😕, \nqayta yuboring...",
         'ru': f"Вы неправильно ввели свое полное имя: \"{user_fullname}\"😕, \nотправьте еще раз...",
@@ -373,3 +373,21 @@ async def leave_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    text="Uzur, bu bot sizning guruhingiz uchun emas!\nThis bot is not working in your group😣")
     await context.bot.leave_chat(update.message.chat_id)
 
+
+async def alll(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.chat_id != GROUP_CHAT_ID:
+        return
+
+    text = "Guvohnoma olmoqchi bo'lgan volontiyorlar yoq!"
+
+    if not users_apply_certificate:
+        await context.bot.send_message(GROUP_CHAT_ID, text=text, parse_mode="Markdown")
+
+    for volunteer in users_apply_certificate:
+        text = (
+            f"New volunteer🥳 \n\n"
+            f"user-id: `{volunteer.get_chat_id()}`\n"
+            f"full-name: {volunteer.get_fullname()}\n"
+            f"Joined: {volunteer.get_time()}"
+        )
+        await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=text, parse_mode="Markdown")
