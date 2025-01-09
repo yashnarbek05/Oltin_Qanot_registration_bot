@@ -80,6 +80,17 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         messages.get(context.user_data.get('language'))
     )
 
+    result = all(char.isalpha() or char.isspace() for char in user_fullname)
+    messages = {
+        'uz': f"Siz to'liq ismingizni noto'g'ri kiritdingiz, \"{user_fullname}\"😕, \nqayta yuboring...",
+        'ru': f"Вы неправильно ввели свое полное имя: \"{user_fullname}\"😕, \nотправьте еще раз...",
+        'en': f"You have entered your full name incorrectly: \"{user_fullname}\"😕, \nsend again..."
+    }
+
+    if not result:
+        await update.message.reply_text(messages.get(context.user_data.get('language')))
+        return FULLNAME
+
     excel_document = await get_values_from_sheet()
 
     if len(excel_document) <= 1:
