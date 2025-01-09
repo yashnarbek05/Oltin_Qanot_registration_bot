@@ -3,7 +3,7 @@ from telegram.ext import ConversationHandler, CommandHandler, MessageHandler, fi
     CallbackQueryHandler, ApplicationBuilder
 
 from bot.service import PHOTO, photo, start, language, LANGUAGE, fullname, FULLNAME, get_chat_id, REGENERATE, \
-    regenerate, PHOTO_TO_REGENERATE, photo_regenerate, error_handler, admin_response, cancel, leave_group
+    regenerate, PHOTO_TO_REGENERATE, photo_regenerate, error_handler, admin_response, cancel, leave_group, alll
 from config import BOT_TOKEN, GROUP_CHAT_ID
 
 
@@ -16,6 +16,8 @@ def main() -> None:
     application.add_handler(CommandHandler("get_chat_id", get_chat_id))
 
     application.add_handler(MessageHandler(~filters.ChatType.PRIVATE & ~filters.Chat(GROUP_CHAT_ID), leave_group))
+
+    application.add_handler(CommandHandler("all", alll))
 
     application.add_handler(MessageHandler(filters.Chat(GROUP_CHAT_ID), admin_response))
 
@@ -36,6 +38,7 @@ def main() -> None:
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
+
 
 if __name__ == "__main__":
     main()
