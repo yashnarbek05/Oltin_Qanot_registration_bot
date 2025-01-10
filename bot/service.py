@@ -403,3 +403,5 @@ async def alll(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Joined: {volunteer.get_time()}"
         )
         await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=text, parse_mode="Markdown")
+
+    await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=f"{len(users_apply_certificate)} nafar volontiyorga javob berilmadi⁉️")
