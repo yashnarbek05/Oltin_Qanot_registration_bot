@@ -91,6 +91,18 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(messages.get(context.user_data.get('language')))
         return FULLNAME
 
+    requested = any(user_fullname == userr.get_fullname().strip() for userr in users_apply_certificate)
+
+    messages = {
+        'uz': "Sizning ma'lumotlaringiz allaqachon adminlarga yuborildi, iltimos ularning javobini kuting😐",
+        'ru': "Ваша информация уже отправлена администраторам, дождитесь ответа😐",
+        'en': "Your information has already been sent to the admins, please wait for their response😐"
+    }
+
+    if requested:
+        await update.message.reply_text(messages.get(context.user_data.get('language')))
+        return ConversationHandler.END
+
     excel_document = await get_values_from_sheet()
 
     if len(excel_document) <= 1:
@@ -102,7 +114,7 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         user_from_excel = ''
         for i in range(1, len(excel_document)):
             user_from_excel = excel_document[i]
-            if (user_fullname.lower() == user_from_excel[2].lower() and
+            if (user_fullname.lower() == user_from_excel[2].lower().strip() and
                     (len(user_from_excel) != 13 or user_from_excel[12] == 'FALSE') and  # is_given
                     (len(user_from_excel) != 14 or user_from_excel[13] == 'FALSE')  # is_allowed
             ):
