@@ -25,6 +25,7 @@ FULLNAME, PHOTO, LOCATION, BIO = range(1, 5)
 LANGUAGE = 0
 REGENERATE = 6
 PHOTO_TO_REGENERATE = 7
+ADMIN = 8
 
 users_apply_certificate = list()
 
@@ -81,25 +82,26 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
 
     result = all(not char.isdigit() for char in user_fullname)
-    messages = {
-        'uz': f"Siz to'liq ismingizni noto'g'ri kiritdingiz, \"{user_fullname}\"😕, \nqayta yuboring...",
-        'ru': f"Вы неправильно ввели свое полное имя: \"{user_fullname}\"😕, \nотправьте еще раз...",
-        'en': f"You have entered your full name incorrectly: \"{user_fullname}\"😕, \nsend again..."
-    }
 
     if not result:
+        messages = {
+            'uz': f"Siz to'liq ismingizni noto'g'ri kiritdingiz, \"{user_fullname}\"😕, \nqayta yuboring...",
+            'ru': f"Вы неправильно ввели свое полное имя: \"{user_fullname}\"😕, \nотправьте еще раз...",
+            'en': f"You have entered your full name incorrectly: \"{user_fullname}\"😕, \nsend again..."
+        }
         await update.message.reply_text(messages.get(context.user_data.get('language')))
         return FULLNAME
 
-    requested = any(user_fullname == userr.get_fullname().strip() for userr in users_apply_certificate)
-
-    messages = {
-        'uz': "Sizning ma'lumotlaringiz allaqachon adminlarga yuborildi, iltimos ularning javobini kuting😐",
-        'ru': "Ваша информация уже отправлена администраторам, дождитесь ответа😐",
-        'en': "Your information has already been sent to the admins, please wait for their response😐"
-    }
+    requested = any(int(user.id) == int(userr.get_chat_id()) for userr in users_apply_certificate)
 
     if requested:
+        print('requestedga kirdi')
+        messages = {
+            'uz': "Sizning ma'lumotlaringiz allaqachon adminlarga yuborildi, iltimos ularning javobini kuting😐",
+            'ru': "Ваша информация уже отправлена администраторам, дождитесь ответа😐",
+            'en': "Your information has already been sent to the admins, please wait for their response😐"
+        }
+
         await update.message.reply_text(messages.get(context.user_data.get('language')))
         return ConversationHandler.END
 
@@ -134,7 +136,7 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 context.user_data['vol_id'] = i + VOLUNTEER_ID_BEGINNING
                 return PHOTO
 
-            elif (user_fullname.lower() == user_from_excel[2].lower()
+            elif (user_fullname.lower() == user_from_excel[2].lower().strip()
                   and len(user_from_excel) > 13 and user_from_excel[12] == 'TRUE'  # is_given
             ):
                 messages = {
@@ -179,9 +181,15 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                  f"\nJoined: {context.user_data.get('time')}")
 
     with open(f"images/user_photo/{context.user_data.get('fullname')}.jpg", "rb") as photo:
-        await context.bot.send_photo(chat_id=GROUP_CHAT_ID, photo=photo, caption=caption, parse_mode="Markdown")
-        await context.bot.send_message(chat_id=GROUP_CHAT_ID,
-                                       text=f"shu ko'rinishda javob bering:\n@{context.bot.username} user_id: ✅/❌ [cause]")
+        keyboard = [
+            [InlineKeyboardButton("✅", callback_data=f"{update.effective_user.id} ✅"),
+             InlineKeyboardButton("❌", callback_data=f"{update.effective_user.id} ❌")]
+        ]
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await context.bot.send_photo(chat_id=GROUP_CHAT_ID, photo=photo, caption=caption, parse_mode='Markdown',
+                                     reply_markup=reply_markup)
 
     logger.info("Photo of %s: %s sent to group", user.first_name,
                 f"images/user_photo/{context.user_data.get('fullname')}.jpg")
@@ -207,12 +215,6 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
-async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send the group chat ID."""
-    chat_id = update.effective_chat.id
-    logger.info(f"This chat's ID is: {chat_id}")
-    await update.message.reply_text(f"This chat's ID is: {chat_id}")
-
 
 async def error_handler(update: Update, context: CallbackContext):
     """Log the error and send a message to the user."""
@@ -233,100 +235,134 @@ async def cancel(update: Update, context: CallbackContext):
 
 
 async def admin_response(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if (
-            update.message.chat.type == "group" or update.message.chat.type == "supergroup") and update.message.chat_id == GROUP_CHAT_ID:
-        # Get the message text
-        received_message = update.message.text
 
-        received_message_split = received_message.split(" ", 3)
+    query = update.callback_query
 
-        if received_message_split[0] != "@" + context.bot.username:
-            return
+    await query.answer("Progress...")
 
-        user = ""
-        for i in range(len(users_apply_certificate)):
+    query_splited = query.data.split(" ")
 
-            user = users_apply_certificate[i]
 
-            if received_message_split[1].replace(":", "") == user.get_chat_id():
+    user = ""
+    for i in range(len(users_apply_certificate)):
 
-                if received_message_split[2] == "✅":
-                    updated2, allowed = await update_allowing(user.get_sheet_id(), True)
+        user = users_apply_certificate[i]
 
-                    logging.info(f"{updated2} rows updated to {allowed}!!! ")
-                    logging.info(f"index = {user.get_sheet_id()} ")
+        if query_splited[0] == user.get_chat_id():
 
-                    await context.bot.send_message(chat_id=GROUP_CHAT_ID,
-                                                   text=f"{user.get_fullname()} ga guvohnoma olishiga ruxsat berildi✅")
 
-                    photo_name = await prepare_badge(user.get_fullname(),
-                                                     str(user.get_vol_id()),
-                                                     user.get_user_photo())
+            if query_splited[1] == "✅":
+                updated2, allowed = await update_allowing(user.get_sheet_id(), True)
 
-                    with open(photo_name, "rb") as prepared_badge:
-                        logging.info("Photo opened for sending to user!")
+                logging.info(f"{updated2} rows updated to {allowed}!!! ")
+                logging.info(f"index = {user.get_sheet_id()} ")
 
-                        messages = {
-                            'uz': "Tabriklaymiz🎉, sizning  guvohnomangiz tayyor bo'ldi. Volontyorlik faoliyatingizga omad tilaymiz. Volontyorlik oilamizga xush kelibsiz🤗\nKanalimizga obuna bo'ling: @Volunteers_uz",
-                            'ru': 'Поздравляем🎉, ваш сертификат готов. Удачи в вашем волонтерстве. Добро пожаловать в нашу волонтерскую семью🤗\nПодпишитесь на наш канал: @Volunteers_uz',
-                            'en': "Congratulations🎉, your certificate is ready. Good luck with your volunteering. Welcome to our volunteer family🤗\nSubscribe to our channel: @Volunteers_uz"
-                        }
+                await context.bot.send_message(chat_id=GROUP_CHAT_ID,
+                                               text=f"{user.get_fullname()} ga guvohnoma olishiga ruxsat berildi✅")
 
-                        await context.bot.send_photo(chat_id=user.get_chat_id(),
-                                                     photo=prepared_badge,
-                                                     caption=messages.get(context.user_data.get('language')))
+                photo_name = await prepare_badge(user.get_fullname(),
+                                                 str(user.get_vol_id()),
+                                                 user.get_user_photo())
 
-                        updated1, given = await update_given(user.get_sheet_id(), True)
-                        logging.info("Photo sent successfully to user <3 ")
-                        logging.info(f"{updated1} rows updated to {given}!!! ")
-
-                    users_apply_certificate.pop(i)
-
-                    if os.path.exists(photo_name):
-                        os.remove(photo_name)  # Delete the file
-                        os.remove(user.get_user_photo())  # Delete the file
-                    else:
-                        print(f"The file {photo_name} does not exist.")
-
-                    return
-
-                elif received_message_split[2] == "❌":
-                    await context.bot.send_message(chat_id=GROUP_CHAT_ID,
-                                                   text=f"{user.get_fullname()} ga guvohnoma olishiga ruxsat berilmadi❌")
+                with open(photo_name, "rb") as prepared_badge:
+                    logging.info("Photo opened for sending to user!")
 
                     messages = {
-                        'uz': f"Uzur, sizing yuborgan ma'lumotlaringiz adminlar tomonidan rad etildi.\n{'' if len(received_message_split) < 4 else 'sabab: ' + received_message_split[3]}",
-                        'ru': f"К сожалению, предоставленная вами информация была отклонена администраторами.\n{'' if len(received_message_split) < 4 else 'причина: ' + received_message_split[3]}",
-                        'en': f"Sorry, your submitted information has been rejected by admins.\n{'' if len(received_message_split) < 4 else 'cause: ' + received_message_split[3]}"
+                        'uz': "Tabriklaymiz🎉, sizning  guvohnomangiz tayyor bo'ldi. Volontyorlik faoliyatingizga omad tilaymiz. Volontyorlik oilamizga xush kelibsiz🤗\nKanalimizga obuna bo'ling: @Volunteers_uz",
+                        'ru': 'Поздравляем🎉, ваш сертификат готов. Удачи в вашем волонтерстве. Добро пожаловать в нашу волонтерскую семью🤗\nПодпишитесь на наш канал: @Volunteers_uz',
+                        'en': "Congratulations🎉, your certificate is ready. Good luck with your volunteering. Welcome to our volunteer family🤗\nSubscribe to our channel: @Volunteers_uz"
                     }
 
-                    await context.bot.send_message(chat_id=user.get_chat_id(),
-                                                   text=messages.get(context.user_data.get('language')))
+                    await context.bot.send_photo(chat_id=user.get_chat_id(),
+                                                 photo=prepared_badge,
+                                                 caption=messages.get(user.get_language()))
 
-                    updated2, allowed = await update_allowing(user.get_sheet_id(), False)
-
-                    logging.info(f"{updated2} rows updated to {allowed}!!! ")
-
-                    updated1, given = await update_given(user.get_sheet_id(), False)
-
+                    updated1, given = await update_given(user.get_sheet_id(), True)
+                    logging.info("Photo sent successfully to user <3 ")
                     logging.info(f"{updated1} rows updated to {given}!!! ")
-                    users_apply_certificate.pop(i)
 
-                    if os.path.exists(user.get_user_photo()):
-                        os.remove(user.get_user_photo())  # Delete the file
-                        print(f"The file {user.get_user_photo()} has been deleted successfully.")
-                    else:
-                        print(f"The file {user.get_user_photo()} does not exist.")
+                users_apply_certificate.pop(i)
 
-                    return
+                context.user_data.clear()
 
+                if os.path.exists(photo_name):
+                    os.remove(photo_name)  # Delete the file
+                    os.remove(user.get_user_photo())  # Delete the file
                 else:
-                    await context.bot.send_message(chat_id=GROUP_CHAT_ID,
-                                                   text=f"{received_message_split[2]} xato context kiritdingiz!")
-                    return
+                    print(f"The file {photo_name} does not exist.")
 
-        await context.bot.send_message(chat_id=GROUP_CHAT_ID,
-                                       text=f"Bunday {received_message_split[1].replace(':', '')} idli odam topilmadi!")
+                return
+
+            elif query_splited[1] == "❌":
+
+                context.chat_data["pending_rejection"] = user
+                context.chat_data["user_list_index"] = i
+
+                prompt_message = await context.bot.send_message(
+                    chat_id=GROUP_CHAT_ID,
+                    text=f"Iltimos, {user.get_fullname()} ga nega ruxsat bermaganingizni sababini yozing(til: {user.get_language()}):"
+                )
+
+                context.chat_data["rejection_prompt_message_id"] = prompt_message.message_id
+                return
+
+    await context.bot.send_message(chat_id=GROUP_CHAT_ID,
+                                   text=f"Bunday {query_splited[0]} idli odam topilmadi!")
+
+
+async def capture_rejection_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not 'pending_rejection' in context.chat_data.keys(): return
+    user = context.chat_data.get("pending_rejection")
+    prompt_message_id = context.chat_data.get("rejection_prompt_message_id")
+
+    # Validate the reply
+    if not user.get_chat_id() or not prompt_message_id:
+        await update.message.reply_text("No pending rejection reason.")
+        return
+
+    if not update.message.reply_to_message or update.message.reply_to_message.message_id != prompt_message_id:
+        return
+
+    # Save the reason and clear the state
+    reason = update.message.text
+    del context.chat_data["pending_rejection"]
+    del context.chat_data["rejection_prompt_message_id"]
+
+    # Notify the group and the user
+    await context.bot.send_message(
+        chat_id=GROUP_CHAT_ID,
+        text=f"{user.get_fullname()} ga guvohnoma olishiga ruxsat berilmadi❌ \nsabab: " + reason
+    )
+
+    messages = {
+        'uz': f"Uzur, sizning yuborgan ma'lumotlaringiz adminlar tomonidan rad etildi.\n{'' if not reason else 'sabab: ' + reason}",
+        'ru': f"К сожалению, предоставленная вами информация была отклонена администраторами.\n{'' if not reason else 'причина: ' + reason}",
+        'en': f"Sorry, your submitted information has been rejected by admins.\n{'' if not reason else 'cause: ' + reason}"
+    }
+
+    await context.bot.send_message(chat_id=user.get_chat_id(),
+                                   text=messages.get(user.get_language()))
+
+
+    context.user_data.clear()
+
+    updated2, allowed = await update_allowing(user.get_sheet_id(), False)
+
+    logging.info(f"{updated2} rows updated to {allowed}!!! ")
+
+    updated1, given = await update_given(user.get_sheet_id(), False)
+
+    logging.info(f"{updated1} rows updated to {given}!!! ")
+    users_apply_certificate.pop(context.chat_data.get("user_list_index"))
+
+    del context.chat_data["user_list_index"]
+
+    if os.path.exists(user.get_user_photo()):
+        os.remove(user.get_user_photo())
+    else:
+        print(f"The file {user.get_user_photo()} does not exist.")
+
+    return
 
 
 async def regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -377,6 +413,8 @@ async def photo_regenerate(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     else:
         print(f"The file {photo_name} does not exist.")
 
+    context.user_data.clear()
+
     return ConversationHandler.END
 
 
@@ -404,4 +442,5 @@ async def alll(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=text, parse_mode="Markdown")
 
-    await context.bot.send_message(chat_id=GROUP_CHAT_ID, text=f"{len(users_apply_certificate)} nafar volontiyorga javob berilmadi⁉️")
+    await context.bot.send_message(chat_id=GROUP_CHAT_ID,
+                                   text=f"{len(users_apply_certificate)} nafar volontiyorga javob berilmadi⁉️")
