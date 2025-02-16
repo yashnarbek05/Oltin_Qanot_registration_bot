@@ -542,7 +542,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
 
-    if not re.match(r"^/search [0-9]+$" , text) and not re.match(r'^/search [A-Za-z\'\ʼ\‘ ]+$' , text):
+    if not re.match(r"^/search [0-9]+$" , text) and not re.match(r'^/search (?!.*\d).+$' , text):
         await context.bot.send_message(GROUP_CHAT_ID,
                                        f'Xato context kiritildi')
         return
