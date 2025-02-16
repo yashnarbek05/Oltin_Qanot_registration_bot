@@ -555,7 +555,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     for i in range(1, len(new_datas)):
         user_from_excel = new_datas[i]
-        if (len(user_from_excel) == 15 and user_from_excel[14] == str(vol_id)) or user_from_excel[2].strip() == str(vol_id): # volunteer_id
+        if (len(user_from_excel) == 15 and user_from_excel[14] == str(vol_id)) or str(vol_id) in user_from_excel[2].strip(): # volunteer_id
             designed_data = await design_user_data(user_from_excel)
             await context.bot.send_message(GROUP_CHAT_ID, designed_data)
             return
@@ -565,7 +565,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     for i in range(1, len(old_datas)):
         user_from_excel = old_datas[i]
-        if (len(user_from_excel) == 15 and user_from_excel[14] == str(vol_id)) or user_from_excel[2].strip() == str(vol_id): # volunteer_id
+        if (len(user_from_excel) == 15 and user_from_excel[14] == str(vol_id)) or str(vol_id) in user_from_excel[2].strip(): # volunteer_id
             designed_data = await design_user_data(user_from_excel)
             await context.bot.send_message(GROUP_CHAT_ID, designed_data)
             return
