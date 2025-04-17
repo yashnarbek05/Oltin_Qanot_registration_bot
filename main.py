@@ -4,7 +4,7 @@ from telegram.ext import ConversationHandler, CommandHandler, MessageHandler, fi
 
 from bot.service import PHOTO, photo, start, language, LANGUAGE, fullname, FULLNAME, REGENERATE, \
     regenerate, PHOTO_TO_REGENERATE, photo_regenerate, error_handler, admin_response, cancel, leave_group, alll, \
-    capture_rejection_reason, search
+    capture_rejection_reason, search, choose_lang, CHOOSE_LANG
 from config import BOT_TOKEN, GROUP_CHAT_ID
 
 
@@ -18,6 +18,7 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
+            CHOOSE_LANG: [CallbackQueryHandler(choose_lang)],
             LANGUAGE: [CallbackQueryHandler(language)],
             FULLNAME: [CommandHandler('cancel', cancel), MessageHandler(filters.TEXT, fullname)],
             REGENERATE: [CommandHandler("regenerate", regenerate)],

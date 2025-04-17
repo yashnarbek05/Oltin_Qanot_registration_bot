@@ -8,9 +8,11 @@ from telegram.ext import (
     ConversationHandler, CallbackContext,
 )
 
+from telegram.error import BadRequest
+
 from bot.models.user import User
 from config import GROUP_CHAT_ID, SHEET_NAME_FOR_OLD_DATAS, SHEET_NAME_FOR_NEW_DATAS, \
-    NEW_VOLUNTEERS_BEGINNING_ID
+    NEW_VOLUNTEERS_BEGINNING_ID, REQUESTED_CHANNELS
 from image.service import prepare_badge
 from sheet.service import get_values_from_sheet, update_allowing, update_given, write_volunteer_id
 
@@ -28,12 +30,56 @@ LANGUAGE = 0
 REGENERATE = 6
 PHOTO_TO_REGENERATE = 7
 ADMIN = 8
+CHOOSE_LANG = 9
 
 users_apply_certificate = list()
 
+async def check_user_in_channels(user_id, context: ContextTypes.DEFAULT_TYPE):
+
+    joined = True
+    for channel in REQUESTED_CHANNELS:
+        
+        try:
+            member = await context.bot.get_chat_member(chat_id=channel, user_id=user_id)
+            if member.status not in ["member", "administrator", "creator"]:
+                joined = False
+        except BadRequest:
+            pass  # Bot might not have access or user is not a member
+
+    if joined == False:
+
+        keyboard = []
+        for channel_url in REQUESTED_CHANNELS:
+            clean_channel = channel_url.replace("@", "")
+            keyboard.append([InlineKeyboardButton(clean_channel, url=f"https://t.me/{clean_channel}")])
+
+        keyboard.append([InlineKeyboardButton("Obuna bo'ldim✅", callback_data = "sub")])
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+
+        # Send message with inline keyboard
+        await context.bot.send_message(
+            chat_id=user_id,
+            text="Majburiy kanallarga obuna bo'ling:",
+            reply_markup=reply_markup
+        )
+        return CHOOSE_LANG
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Starts the conversation and asks the user about their gender."""
+
+    if update.effective_user is None:
+        logger.error("update.effective_user is None")
+        return 
+    user_id = update.effective_user.id
+    
+
+    res = await check_user_in_channels(user_id, context)
+    if res == CHOOSE_LANG: return CHOOSE_LANG
+
+
+    
     keyboard = [
         [InlineKeyboardButton("English🇺🇸", callback_data="en")],
         [InlineKeyboardButton("O'zbek🇺🇿", callback_data="uz")],
@@ -42,12 +88,35 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
+
     await update.message.reply_text("Tilni tanlang:", reply_markup=reply_markup)
 
     return LANGUAGE
 
 
+async def choose_lang(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+
+    res = await check_user_in_channels(query.from_user.id, context)
+    if res == CHOOSE_LANG: return CHOOSE_LANG
+
+    await query.answer("Progress...")
+
+    keyboard = [
+        [InlineKeyboardButton("English🇺🇸", callback_data="en")],
+        [InlineKeyboardButton("O'zbek🇺🇿", callback_data="uz")],
+        [InlineKeyboardButton("Русский🇷🇺", callback_data="ru")]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await query.edit_message_text("Majburiy kanallarga obuna bo'ldingiz!\n\nTilni tanlang:", reply_markup=reply_markup)
+
+    return LANGUAGE
+
+
 async def language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+
     query = update.callback_query
 
     # CallbackQueries need to be answered, even if no notification to the user is needed
