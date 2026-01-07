@@ -12,7 +12,7 @@ from telegram.error import BadRequest
 
 from bot.models.user import User
 from config import GROUP_CHAT_ID, SHEET_NAME_FOR_OLD_DATAS, SHEET_NAME_FOR_NEW_DATAS, \
-    NEW_VOLUNTEERS_BEGINNING_ID, REQUESTED_CHANNELS
+    NEW_VOLUNTEERS_BEGINNING_ID, REQUESTED_CHANNELS, ADMINS
 from image.service import prepare_badge
 from sheet.service import get_values_from_sheet, update_allowing, update_given, write_volunteer_id
 
@@ -332,8 +332,30 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def error_handler(update: Update, context: CallbackContext):
-    await context.bot.send_message(chat_id=GROUP_CHAT_ID,
-                                   text=f"Xatolik yuz berdi😢: \n\n{context.error}")
+
+    # To‘liq traceback olish
+    tb = "".join(
+        traceback.format_exception(
+            type(context.error),
+            context.error,
+            context.error.__traceback__
+        )
+    )
+
+    error_text = (
+        "🚨 *Botda xatolik yuz berdi!*\n\n"
+        f"*Xato turi:* `{type(context.error).__name__}`\n\n"
+        f"*Xato matni:*\n`{context.error}`\n\n"
+        f"*Qayerda (traceback):*\n```{tb}```"
+    )
+
+    await context.bot.send_message(
+        chat_id=ADMINS[0],
+        text=error_text,
+        parse_mode="Markdown"
+    )
+
+    return ConversationHandler.END
     
 
 async def cancel(update: Update, context: CallbackContext):
