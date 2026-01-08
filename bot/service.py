@@ -59,6 +59,7 @@ async def check_user_in_channels(user_id, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    clear_datas(context)
 
     if update.effective_user is None:
         return 
