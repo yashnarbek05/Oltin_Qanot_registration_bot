@@ -7,6 +7,7 @@ from telegram.ext import (
     ContextTypes,
     ConversationHandler, CallbackContext,
 )
+import traceback
 
 from telegram.error import BadRequest
 
