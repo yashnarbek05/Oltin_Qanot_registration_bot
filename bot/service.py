@@ -341,37 +341,24 @@ async def error_handler(update: Update, context: CallbackContext):
         )
     )
 
-    # Xavfli belgilarni escape qilish
-    def esc(text: str) -> str:
-        for ch in r"\_*[]()~`>#+-=|{}.!":
-            text = text.replace(ch, f"\\{ch}")
-        return text
+    tb_clean = tb.replace("`", "'")
+    error_msg = str(context.error).replace("`", "'")
+
+    if len(tb_clean) > 3000:
+        tb_clean = "...(qisqartirildi)...\n" + tb_clean[-3000:]
 
     error_text = (
-        "🚨 *Botda xatolik yuz berdi\\!*\n\n"
-        f"*Xato turi:* `{esc(type(context.error).__name__)}`\n\n"
-        f"*Xato matni:*\n`{esc(str(context.error))}`\n\n"
-        f"*Traceback:*\n```\n{esc(tb)}\n```"
+        "🚨 *Botda xatolik yuz berdi!*\n\n"
+        f"*Xato turi:* `{type(context.error).__name__}`\n\n"
+        f"*Xato matni:* `{error_msg}`\n\n"
+        f"*Traceback:*\n```{tb_clean}```"
     )
 
-    # Uzunlikni cheklash (4096 - xavfsizlik chegarasi)
-    if len(error_text) > 4000:
-        error_text = error_text[:4000] + "\n\\.\\.\\.qisqartirildi```"
-
-    try:
-        await context.bot.send_message(
-            chat_id=ADMINS[0],
-            text=error_text,
-            parse_mode="MarkdownV2"  # V2 ishlatish tavsiya etiladi
-        )
-        await context.bot.send_message(
-            chat_id=GROUP_CHAT_ID,
-            text=error_text,
-            parse_mode="MarkdownV2"  # V2 ishlatish tavsiya etiladi
-        )
-    except Exception as e:
-        print(f"Error handler o'zi ham xato berdi: {e}")
-        print(tb)  # Kamida consolga chiqarish
+    await context.bot.send_message(
+        chat_id=GROUP_CHAT_ID,
+        text=error_text,
+        parse_mode="Markdown"
+    )
     
 
 async def cancel(update: Update, context: CallbackContext):
