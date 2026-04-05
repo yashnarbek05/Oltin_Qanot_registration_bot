@@ -333,6 +333,11 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def error_handler(update: Update, context: CallbackContext):
+    # # NoneType chat_id xatosini e’tiborsiz qoldirish
+    # if context.error and "'NoneType' object has no attribute 'chat_id'" in str(context.error):
+    #     return
+
+    # To‘liq traceback olish
     tb = "".join(
         traceback.format_exception(
             type(context.error),
@@ -341,17 +346,11 @@ async def error_handler(update: Update, context: CallbackContext):
         )
     )
 
-    tb_clean = tb.replace("`", "'")
-    error_msg = str(context.error).replace("`", "'")
-
-    if len(tb_clean) > 3000:
-        tb_clean = "...(qisqartirildi)...\n" + tb_clean[-3000:]
-
     error_text = (
         "🚨 *Botda xatolik yuz berdi!*\n\n"
         f"*Xato turi:* `{type(context.error).__name__}`\n\n"
-        f"*Xato matni:* `{error_msg}`\n\n"
-        f"*Traceback:*\n```{tb_clean}```"
+        f"*Xato matni:*\n`{context.error}`\n\n"
+        f"*Qayerda (traceback):*\n```{tb}```"
     )
 
     await context.bot.send_message(
@@ -359,6 +358,8 @@ async def error_handler(update: Update, context: CallbackContext):
         text=error_text,
         parse_mode="Markdown"
     )
+
+    return ConversationHandler.END
     
 
 async def cancel(update: Update, context: CallbackContext):
