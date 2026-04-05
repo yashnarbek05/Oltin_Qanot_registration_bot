@@ -364,6 +364,11 @@ async def error_handler(update: Update, context: CallbackContext):
             text=error_text,
             parse_mode="MarkdownV2"  # V2 ishlatish tavsiya etiladi
         )
+        await context.bot.send_message(
+            chat_id=GROUP_CHAT_ID,
+            text=error_text,
+            parse_mode="MarkdownV2"  # V2 ishlatish tavsiya etiladi
+        )
     except Exception as e:
         print(f"Error handler o'zi ham xato berdi: {e}")
         print(tb)  # Kamida consolga chiqarish
