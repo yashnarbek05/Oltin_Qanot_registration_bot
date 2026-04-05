@@ -6,6 +6,7 @@ from bot.service import PHOTO, photo, start, language, LANGUAGE, fullname, FULLN
     regenerate, PHOTO_TO_REGENERATE, photo_regenerate, error_handler, admin_response, cancel, leave_group, alll, \
     capture_rejection_reason, search, choose_lang, CHOOSE_LANG
 from config import BOT_TOKEN, GROUP_CHAT_ID
+import traceback
 
 
 def main() -> None:
