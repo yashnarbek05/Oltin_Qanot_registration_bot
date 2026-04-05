@@ -333,8 +333,6 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def error_handler(update: Update, context: CallbackContext):
-
-    # To‘liq traceback olish
     tb = "".join(
         traceback.format_exception(
             type(context.error),
@@ -343,20 +341,32 @@ async def error_handler(update: Update, context: CallbackContext):
         )
     )
 
+    # Xavfli belgilarni escape qilish
+    def esc(text: str) -> str:
+        for ch in r"\_*[]()~`>#+-=|{}.!":
+            text = text.replace(ch, f"\\{ch}")
+        return text
+
     error_text = (
-        "🚨 *Botda xatolik yuz berdi!*\n\n"
-        f"*Xato turi:* `{type(context.error).__name__}`\n\n"
-        f"*Xato matni:*\n`{context.error}`\n\n"
-        f"*Qayerda (traceback):*\n```{tb}```"
+        "🚨 *Botda xatolik yuz berdi\\!*\n\n"
+        f"*Xato turi:* `{esc(type(context.error).__name__)}`\n\n"
+        f"*Xato matni:*\n`{esc(str(context.error))}`\n\n"
+        f"*Traceback:*\n```\n{esc(tb)}\n```"
     )
 
-    await context.bot.send_message(
-        chat_id=ADMINS[0],
-        text=error_text,
-        parse_mode="Markdown"
-    )
+    # Uzunlikni cheklash (4096 - xavfsizlik chegarasi)
+    if len(error_text) > 4000:
+        error_text = error_text[:4000] + "\n\\.\\.\\.qisqartirildi```"
 
-    return ConversationHandler.END
+    try:
+        await context.bot.send_message(
+            chat_id=ADMINS[0],
+            text=error_text,
+            parse_mode="MarkdownV2"  # V2 ishlatish tavsiya etiladi
+        )
+    except Exception as e:
+        print(f"Error handler o'zi ham xato berdi: {e}")
+        print(tb)  # Kamida consolga chiqarish
     
 
 async def cancel(update: Update, context: CallbackContext):
@@ -503,9 +513,10 @@ async def capture_rejection_reason(update: Update, context: ContextTypes.DEFAULT
         )
     }
 
-
-    await context.bot.send_message(chat_id=user.get_chat_id(),
-                                   text=messages.get(user.get_language()))
+    try:
+        await context.bot.send_message(chat_id=user.get_chat_id(), text=messages.get(user.get_language()))
+    except Exception as e:
+        print(f"Xato berdi: {e}")
 
     updated2, allowed = await update_allowing(user.get_sheet_id(), False, user.get_sheet_name())
 
