@@ -349,7 +349,7 @@ async def error_handler(update: Update, context: CallbackContext):
     error_text = (
         "🚨 *Botda xatolik yuz berdi!*\n\n"
         f"*Xato turi:* `{type(context.error).__name__}`\n\n"
-        f"*Xato matni:*\n`{context.error}`\n\n"
+        f"*Xato matni:*\n`{str(context.error)[:200]}`\n\n"
         f"*Qayerda (traceback):*\n```{tb}```"
     )
 
