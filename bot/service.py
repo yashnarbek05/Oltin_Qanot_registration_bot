@@ -228,8 +228,7 @@ async def fullname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     for i in range(1, len(old_datas)):
         user_from_excel = old_datas[i]
         if (user_fullname.lower() == user_from_excel[2].lower().strip() and
-                (len(user_from_excel) <= 13 or user_from_excel[12] == 'FALSE') and  # is_given
-                (len(user_from_excel) <= 14 or user_from_excel[13] == 'FALSE')  # is_allowed
+                (len(user_from_excel) <= 13 or user_from_excel[12] == 'FALSE' or user_from_excel[12] == '') # is_given
         ):
 
             messages = {
