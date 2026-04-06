@@ -333,9 +333,9 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def error_handler(update: Update, context: CallbackContext):
-    # # NoneType chat_id xatosini e’tiborsiz qoldirish
-    # if context.error and "'NoneType' object has no attribute 'chat_id'" in str(context.error):
-    #     return
+    # NoneType chat_id xatosini e’tiborsiz qoldirish
+    if context.error and "'NoneType' object has no attribute 'chat_id'" in str(context.error):
+        return
 
     # To‘liq traceback olish
     tb = "".join(
