@@ -620,8 +620,9 @@ async def alll(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     allowed_ids = [GROUP_CHAT_ID, *ADMINS]
-    
-    if update.message.chat_id not in allowed_ids:
+
+    user_id = update.message.chat_id
+    if user_id not in allowed_ids:
         await update.message.reply_text("Bu buyruq siz uchun emas!\nthis command is not for you!")
         return
 
@@ -629,7 +630,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     if not re.match(r"^/search [0-9]+$" , text) and not re.match(r'^/search (?!.*\d).+$' , text):
-        await context.bot.send_message(GROUP_CHAT_ID,
+        await context.bot.send_message(user_id,
                                        f'Xato context kiritildi')
         return
     
@@ -643,7 +644,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_from_excel = new_datas[i]
         if (len(user_from_excel) == 15 and user_from_excel[14] == str(vol_id)) or str(vol_id) in user_from_excel[2].strip(): # volunteer_id
             designed_data = await design_user_data(user_from_excel)
-            await context.bot.send_message(GROUP_CHAT_ID, designed_data)
+            await context.bot.send_message(user_id, designed_data)
             return
     
     old_datas = await get_values_from_sheet(SHEET_NAME_FOR_OLD_DATAS)
@@ -653,9 +654,9 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_from_excel = old_datas[i]
         if (len(user_from_excel) == 15 and user_from_excel[14] == str(vol_id)) or str(vol_id) in user_from_excel[2].strip(): # volunteer_id
             designed_data = await design_user_data(user_from_excel)
-            await context.bot.send_message(GROUP_CHAT_ID, designed_data)
+            await context.bot.send_message(user_id, designed_data)
             return
     
     new_datas.clear
     old_datas.clear
-    await context.bot.send_message(GROUP_CHAT_ID, f'Bunaqa volontiyor topilmadi!')
+    await context.bot.send_message(user_id, f'Bunaqa volontiyor topilmadi!')
