@@ -618,8 +618,10 @@ async def alll(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if update.message.chat_id != GROUP_CHAT_ID or update.message.chat_id != ADMINS[0]:
+    
+    allowed_ids = [GROUP_CHAT_ID, *ADMINS]
+    
+    if update.message.chat_id not in allowed_ids:
         await update.message.reply_text("Bu buyruq siz uchun emas!\nthis command is not for you!")
         return
 
